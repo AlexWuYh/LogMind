@@ -201,7 +201,12 @@ export default function LogsPage() {
                   )}
                 </div>
               ) : (
-                filteredLogs.map((log) => (
+                filteredLogs.map((log) => {
+                  const displayProgress = log.items && log.items.length > 0 
+                    ? Math.round(log.items.reduce((acc, item) => acc + (item.progress || 0), 0) / log.items.length)
+                    : 0;
+                    
+                  return (
                   <Card key={log.id} className={`transition-all duration-200 ${expandedLogId === log.id ? 'ring-2 ring-primary/20' : 'hover:shadow-md'}`}>
                     <div 
                       className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 cursor-pointer"
@@ -231,10 +236,20 @@ export default function LogsPage() {
                            <div className="h-2 flex-1 bg-secondary rounded-full overflow-hidden">
                              <div 
                                className="h-full bg-primary rounded-full" 
-                               style={{ width: `${log.progress}%` }} 
+                               style={{ width: `${displayProgress}%` }} 
                              />
                            </div>
-                           <span className="text-xs font-medium text-muted-foreground w-8">{log.progress}%</span>
+                           <Badge 
+                             variant={displayProgress === 100 ? "default" : displayProgress === 0 ? "destructive" : "secondary"} 
+                             className={cn(
+                               "text-[10px] h-5 px-1.5 font-normal flex-shrink-0",
+                               displayProgress === 100 && "bg-green-600 hover:bg-green-700",
+                               displayProgress === 0 && "bg-muted-foreground/30 text-muted-foreground hover:bg-muted-foreground/40",
+                               displayProgress > 0 && displayProgress < 100 && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                             )}
+                           >
+                             {displayProgress}%
+                           </Badge>
                          </div>
                       </div>
 
@@ -257,20 +272,48 @@ export default function LogsPage() {
                         <div className="grid gap-6 md:grid-cols-2">
                            <div>
                              <h4 className="text-sm font-medium mb-3 text-muted-foreground">工作事项</h4>
-                             <ul className="space-y-3">
-                               {log.items.map((item, idx) => (
-                                 <li key={idx} className="text-sm flex items-start gap-2">
-                                   <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
-                                   <div className="flex-1">
-                                     <div className="flex justify-between">
-                                        <span className="font-medium text-foreground/90 whitespace-pre-wrap">{item.content}</span>
-                                        <span className="text-xs text-muted-foreground ml-2">{item.progress}%</span>
-                                     </div>
-                                     {item.project && <p className="text-xs text-muted-foreground mt-0.5">项目: {item.project}</p>}
-                                   </div>
-                                 </li>
-                               ))}
-                             </ul>
+                             {(() => {
+                               const groupedItems = log.items.reduce((acc, item) => {
+                                 const project = item.project || "其他/未分类";
+                                 if (!acc[project]) acc[project] = [];
+                                 acc[project].push(item);
+                                 return acc;
+                               }, {} as Record<string, DailyWorkItem[]>);
+
+                               return Object.entries(groupedItems).map(([project, items]) => (
+                                 <div key={project} className="mb-5 last:mb-0">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <div className="h-px flex-1 bg-border/60"></div>
+                                      <h5 className="text-xs font-bold text-primary/80 uppercase tracking-wider bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
+                                        {project}
+                                      </h5>
+                                      <div className="h-px flex-1 bg-border/60"></div>
+                                    </div>
+                                    <ul className="space-y-3">
+                                      {items.map((item, idx) => (
+                                        <li key={idx} className="text-sm flex items-start gap-3 bg-card/50 p-2.5 rounded-md border border-border/40 hover:border-primary/20 transition-colors">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start gap-4">
+                                               <span className="font-medium text-foreground/90 whitespace-pre-wrap leading-relaxed break-words">{item.content}</span>
+                                               <Badge 
+                                                 variant={item.progress === 100 ? "default" : item.progress === 0 ? "destructive" : "secondary"} 
+                                                 className={cn(
+                                                   "text-[10px] h-5 px-1.5 font-normal flex-shrink-0",
+                                                   item.progress === 100 && "bg-green-600 hover:bg-green-700",
+                                                   item.progress === 0 && "bg-muted-foreground/30 text-muted-foreground hover:bg-muted-foreground/40",
+                                                   item.progress > 0 && item.progress < 100 && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                                 )}
+                                               >
+                                                 {item.progress}%
+                                               </Badge>
+                                            </div>
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                 </div>
+                               ));
+                             })()}
                            </div>
                            
                            {log.aiSummary && (
@@ -294,7 +337,8 @@ export default function LogsPage() {
                       </div>
                     )}
                   </Card>
-                ))
+                  );
+                })
               )}
             </div>
           </>

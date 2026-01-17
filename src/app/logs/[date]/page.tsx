@@ -85,7 +85,12 @@ export default function LogEditorPage() {
               date: data.date,
               aiSummary: data.aiSummary || "",
               tomorrowPlan: data.tomorrowPlan || "",
-              items: data.items.length > 0 ? data.items : [{ content: "", progress: 0, priority: "MEDIUM", project: "" }],
+              items: data.items.length > 0 ? data.items.map((item: any) => ({
+                ...item,
+                project: item.project || "",
+                content: item.content || "",
+                priority: item.priority || "MEDIUM",
+              })) : [{ content: "", progress: 0, priority: "MEDIUM", project: "" }],
             });
           }
           setLoading(false);

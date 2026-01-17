@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  role      String     @default("USER")
+  status    String     @default("ACTIVE")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  password  String?
+  logs      DailyLog[]
+  reports   Report[]
+}
+
+model DailyLog {
+  id           String          @id @default(uuid())
+  userId       String
+  date         String
+  project      String?
+  summary      String?
+  priority     String?
+  progress     Int             @default(0)
+  tomorrowPlan String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  aiSummary    String?
+  user         User            @relation(fields: [userId], references: [id])
+  items        DailyWorkItem[]
+
+  @@unique([userId, date])
+}
+
+model DailyWorkItem {
+  id         String   @id @default(uuid())
+  dailyLogId String
+  content    String
+  project    String?
+  priority   String?
+  progress   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  dailyLog   DailyLog @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+}
+
+model SystemConfig {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String
+  periodStart String
+  periodEnd   String
+  content     String
+  model       String?
+  status      String   @default("GENERATED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+}

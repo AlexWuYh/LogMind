@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  logmind:
+    build: .
+    container_name: logmind-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://logmind:logmind_password@postgres:5432/logmind_db
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-super-secret-nextauth-key-change-this
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: logmind-db
+    restart: always
+    environment:
+      - POSTGRES_USER=logmind
+      - POSTGRES_PASSWORD=logmind_password
+      - POSTGRES_DB=logmind_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logmind -d logmind_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

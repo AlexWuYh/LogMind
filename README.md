@@ -1,5 +1,7 @@
 # LogMind
 
+[English](README.md) | [中文](README_zh.md)
+
 Log your work. Let Logmind think.
 
 LogMind is an intelligent work logging and reporting system that helps you track daily tasks and automatically generates weekly, monthly, and yearly reports using AI.

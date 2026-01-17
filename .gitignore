@@ -36,3 +36,6 @@ next-env.d.ts
 # Prisma
 /prisma/*.sqlite
 /prisma/*.sqlite-journal
+
+# Local Maintenance (Tests, Scripts, Reports)
+local_maintenance/

@@ -29,6 +29,8 @@ import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_PROMPTS } from "@/lib/prompts";
 
+import { Switch } from "@/components/ui/switch";
+
 const formSchema = z.object({
   ai_provider: z.enum(["openai", "azure", "custom"]),
   ai_base_url: z.string().optional(),
@@ -38,6 +40,9 @@ const formSchema = z.object({
   prompt_weekly: z.string().optional(),
   prompt_monthly: z.string().optional(),
   prompt_yearly: z.string().optional(),
+  schedule_weekly: z.boolean().default(true),
+  schedule_monthly: z.boolean().default(true),
+  schedule_yearly: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -58,6 +63,9 @@ export default function SettingsPage() {
       prompt_weekly: DEFAULT_PROMPTS.weekly_report,
       prompt_monthly: DEFAULT_PROMPTS.monthly_report,
       prompt_yearly: DEFAULT_PROMPTS.yearly_report,
+      schedule_weekly: true,
+      schedule_monthly: true,
+      schedule_yearly: true,
     },
   });
 
@@ -75,6 +83,9 @@ export default function SettingsPage() {
             prompt_weekly: data.prompt_weekly || DEFAULT_PROMPTS.weekly_report,
             prompt_monthly: data.prompt_monthly || DEFAULT_PROMPTS.monthly_report,
             prompt_yearly: data.prompt_yearly || DEFAULT_PROMPTS.yearly_report,
+            schedule_weekly: data.schedule_weekly !== "false", // Default true
+            schedule_monthly: data.schedule_monthly !== "false",
+            schedule_yearly: data.schedule_yearly !== "false",
           });
         }
         setLoading(false);
@@ -120,9 +131,10 @@ export default function SettingsPage() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <Tabs defaultValue="ai" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="ai">AI 连接配置</TabsTrigger>
               <TabsTrigger value="prompts">Prompt 模板</TabsTrigger>
+              <TabsTrigger value="schedule">定时任务</TabsTrigger>
             </TabsList>
             
             <TabsContent value="ai">
@@ -256,6 +268,71 @@ export default function SettingsPage() {
                         </FormControl>
                         <FormDescription>用于生成年报。占位符: {"{{logs}}"}</FormDescription>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="schedule">
+              <Card>
+                <CardHeader>
+                  <CardTitle>定时任务配置</CardTitle>
+                  <CardDescription>配置自动生成报告的定时任务。</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="schedule_weekly"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">自动生成周报</FormLabel>
+                          <FormDescription>每周一凌晨 02:00 自动生成上周周报</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="schedule_monthly"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">自动生成月报</FormLabel>
+                          <FormDescription>每月 1 日凌晨 03:00 自动生成上月月报</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="schedule_yearly"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">自动生成年报</FormLabel>
+                          <FormDescription>每年 1 月 1 日凌晨 04:00 自动生成上一年年报</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />

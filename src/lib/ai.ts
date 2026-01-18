@@ -17,9 +17,15 @@ interface LogData {
 
 import { DEFAULT_PROMPTS } from "./prompts";
 
-export async function generateReport(type: "WEEKLY" | "MONTHLY" | "YEARLY", startDate: string, endDate: string) {
+export async function generateReport(type: "WEEKLY" | "MONTHLY" | "YEARLY", startDate: string, endDate: string, userId?: string) {
   // 1. Fetch Logs
-  const user = await prisma.user.findFirst();
+  let user;
+  if (userId) {
+    user = await prisma.user.findUnique({ where: { id: userId } });
+  } else {
+    user = await prisma.user.findFirst();
+  }
+  
   if (!user) throw new Error("User not found");
 
   const logs = await prisma.dailyLog.findMany({

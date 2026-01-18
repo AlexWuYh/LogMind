@@ -23,12 +23,13 @@ Requirements:
 - Use clear bullet points
 - Professional and factual tone
 - Language: Chinese (Simplified)
-- Output strictly in JSON format with the following structure:
+- **CRITICAL: You MUST output ONLY valid JSON without any markdown formatting, backticks, or extra text.**
+- Output structure:
 {
   "summary": "Overall summary of the period",
   "key_achievements": ["achievement 1", "achievement 2"],
   "project_breakdown": [
-    { "project": "Project Name", "summary": "What was done" }
+    { "project": "Project Name", "summary": "Detailed summary of work done for this project" }
   ],
   "next_plan": ["plan item 1", "plan item 2"]
 }
@@ -41,6 +42,7 @@ Based on the following daily work logs, generate a concise monthly report.
 
 Requirements:
 - Focus on project-level progress
+- Group all tasks by project name
 - Identify recurring work themes
 - Summarize outcomes instead of daily details
 - Highlight completed milestones
@@ -49,12 +51,13 @@ Requirements:
 - Use clear bullet points
 - Professional and factual tone
 - Language: Chinese (Simplified)
-- Output strictly in JSON format with the following structure:
+- **CRITICAL: You MUST output ONLY valid JSON without any markdown formatting, backticks, or extra text.**
+- Output structure:
 {
   "summary": "Overall summary of the period",
   "key_achievements": ["achievement 1", "achievement 2"],
   "project_breakdown": [
-    { "project": "Project Name", "summary": "What was done" }
+    { "project": "Project Name", "summary": "Comprehensive summary of progress and outcomes for this project" }
   ],
   "next_plan": ["plan item 1", "plan item 2"]
 }
@@ -67,7 +70,7 @@ Based on the following daily work logs, generate a comprehensive yearly review.
 
 Requirements:
 - Focus on overall contributions and impact
-- Group work by major projects
+- Group work by major projects is MANDATORY
 - Highlight long-term achievements and professional growth
 - Avoid daily-level details
 - Use language suitable for performance review
@@ -75,12 +78,13 @@ Requirements:
 - Use clear bullet points
 - Professional and factual tone
 - Language: Chinese (Simplified)
-- Output strictly in JSON format with the following structure:
+- **CRITICAL: You MUST output ONLY valid JSON without any markdown formatting, backticks, or extra text.**
+- Output structure:
 {
   "summary": "Overall summary of the period",
   "key_achievements": ["achievement 1", "achievement 2"],
   "project_breakdown": [
-    { "project": "Project Name", "summary": "What was done" }
+    { "project": "Project Name", "summary": "High-level review of contributions and impact for this project" }
   ],
   "next_plan": ["plan item 1", "plan item 2"]
 }

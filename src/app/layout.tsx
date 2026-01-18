@@ -24,8 +24,8 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${jakarta.variable} flex h-screen overflow-hidden bg-background font-sans antialiased`}>
-        <Providers>
-          {session && <Sidebar />}
+        <Providers session={session}>
+          {session?.user && <Sidebar user={session.user} />}
           <div className="flex flex-1 flex-col overflow-hidden relative">
             {/* Subtle Global Background Gradient */}
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-background via-background to-secondary/20 pointer-events-none z-[-1]" />

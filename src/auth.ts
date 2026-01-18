@@ -28,15 +28,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data;
-          const user = await getUser(email);
-          if (!user) return null;
+          // console.log(`[Auth] Attempting login for: ${email}`);
+          const user = await getUser(email) as any;
+          if (!user) {
+            // console.log(`[Auth] User not found: ${email}`);
+            return null;
+          }
           
           if (!user.password) {
+             // console.log(`[Auth] User has no password set: ${email}`);
              return null; 
           }
 
           const passwordsMatch = await bcrypt.compare(password, user.password);
-          if (passwordsMatch) return user;
+          if (passwordsMatch) {
+            // console.log(`[Auth] Password match for: ${email}, Role: ${user.role}`);
+            return user;
+          }
+          
+          // console.log(`[Auth] Password mismatch for: ${email}`);
         }
 
         console.log("Invalid credentials");
@@ -49,14 +59,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session?.user && token.sub) {
         session.user.id = token.sub;
-        session.user.role = token.role;
+        session.user.role = token.role as string;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
+        // console.log(`[Auth] JWT callback with user: ${user.id}, Role: ${(user as any).role}`);
         token.sub = user.id;
-        token.role = user.role;
+        token.role = (user as any).role as string;
       }
       return token;
     }

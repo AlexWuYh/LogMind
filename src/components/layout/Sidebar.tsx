@@ -36,11 +36,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { User } from "next-auth";
 
-export function Sidebar() {
+export function Sidebar({ user }: { user: User }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'ADMIN';
+  
+  const isAdmin = user?.role === 'ADMIN';
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   return (
@@ -136,8 +137,8 @@ export function Sidebar() {
                  <UserIcon className="h-5 w-5 text-foreground/80" />
                </div>
                <div className="flex-1 overflow-hidden">
-                 <p className="text-sm font-semibold truncate text-foreground">{session?.user?.name || 'User'}</p>
-                 <p className="text-xs text-muted-foreground truncate">{session?.user?.email}</p>
+                 <p className="text-sm font-semibold truncate text-foreground">{user?.name || 'User'}</p>
+                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                </div>
                <div className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                  <Settings className="h-4 w-4" />

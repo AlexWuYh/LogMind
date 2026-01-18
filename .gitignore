@@ -36,6 +36,12 @@ next-env.d.ts
 # Prisma
 /prisma/*.sqlite
 /prisma/*.sqlite-journal
+/prisma/*.db
+
+# Tests
+test-results/
+playwright-report/
+blob-report/
 
 # Local Maintenance (Tests, Scripts, Reports)
 local_maintenance/

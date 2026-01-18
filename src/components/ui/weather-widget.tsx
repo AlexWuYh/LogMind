@@ -7,14 +7,9 @@ export function WeatherWidget() {
   const [weather, setWeather] = useState<{ temp: number; desc: string; city: string } | null>(null);
 
   useEffect(() => {
-    // Mock weather for now as requested (or use free API if needed, but mock is safer without keys)
-    // In a real app, I'd use OpenMeteo or similar.
-    // Let's try to fetch from OpenMeteo for "Beijing" (default) or guess based on timezone
-    
-    async function fetchWeather() {
+    async function fetchWeather(lat: number, lon: number, cityName?: string) {
       try {
-        // Defaulting to Beijing for demo
-        const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=39.9042&longitude=116.4074&current=temperature_2m,weather_code&timezone=Asia%2FShanghai");
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=auto`);
         const data = await res.json();
         const temp = data.current.temperature_2m;
         const code = data.current.weather_code;
@@ -25,13 +20,31 @@ export function WeatherWidget() {
         else if (code > 3 && code < 50) desc = "阴";
         else if (code >= 50) desc = "雨/雪";
 
-        setWeather({ temp, desc, city: "北京" });
+        setWeather({ temp, desc, city: cityName || "成都市" });
       } catch (e) {
-        setWeather({ temp: 25, desc: "晴", city: "北京" });
+        setWeather({ temp: 20, desc: "晴", city: "成都市" });
       }
     }
 
-    fetchWeather();
+    if (navigator.geolocation) {
+       navigator.geolocation.getCurrentPosition(
+         (position) => {
+           // Success: Use coords (City name is hard to get from OpenMeteo without reverse geocoding, 
+           // but we can just say "Local" or try to guess. For now, let's leave city generic or use a placeholder if geolocated)
+           // Actually, OpenMeteo doesn't return city name. 
+           // We can default to "本地" (Local) or "当前位置" if geolocated.
+           fetchWeather(position.coords.latitude, position.coords.longitude, "当前位置");
+         },
+         (error) => {
+           // Error: Use Chengdu
+           console.log("Geolocation failed, using Chengdu default");
+           fetchWeather(30.5728, 104.0668, "成都市");
+         }
+       );
+    } else {
+       // Fallback Chengdu
+       fetchWeather(30.5728, 104.0668, "成都市");
+    }
   }, []);
 
   if (!weather) return null;

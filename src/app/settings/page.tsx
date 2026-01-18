@@ -25,7 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DEFAULT_PROMPTS } from "@/lib/prompts";
 
@@ -34,17 +34,24 @@ import { Switch } from "@/components/ui/switch";
 const PROVIDER_DEFAULTS: Record<string, { baseUrl: string; model: string }> = {
   openai: { baseUrl: "https://api.openai.com/v1", model: "gpt-4-turbo" },
   azure: { baseUrl: "https://{resource}.openai.azure.com", model: "gpt-4" },
-  qwen: { baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus" },
-  doubao: { baseUrl: "https://ark.cn-beijing.volces.com/api/v3", model: "doubao-pro-32k" },
+  aliyun: { baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen-plus" },
+  volcengine: { baseUrl: "https://ark.cn-beijing.volces.com/api/v3", model: "doubao-pro-32k" },
   modelscope: { baseUrl: "https://api.modelscope.cn/v1", model: "qwen-max" },
-  zhipu: { baseUrl: "https://open.bigmodel.cn/api/paas/v4", model: "glm-4" },
-  yuanbao: { baseUrl: "https://api.hunyuan.cloud.tencent.com/v1", model: "hunyuan-pro" },
+  bigmodel: { baseUrl: "https://open.bigmodel.cn/api/paas/v4", model: "glm-4" },
+  tencent: { baseUrl: "https://api.hunyuan.cloud.tencent.com/v1", model: "hunyuan-pro" },
   deepseek: { baseUrl: "https://api.deepseek.com/v1", model: "deepseek-chat" },
   custom: { baseUrl: "", model: "" },
 };
 
+const LEGACY_PROVIDER_MAP: Record<string, string> = {
+  qwen: "aliyun",
+  doubao: "volcengine",
+  zhipu: "bigmodel",
+  yuanbao: "tencent",
+};
+
 const formSchema = z.object({
-  ai_provider: z.enum(["openai", "azure", "custom", "qwen", "doubao", "modelscope", "zhipu", "yuanbao", "deepseek"]),
+  ai_provider: z.enum(["openai", "azure", "custom", "aliyun", "volcengine", "modelscope", "bigmodel", "tencent", "deepseek"]),
   ai_base_url: z.string().optional(),
   ai_api_key: z.string().min(1, "API Key 不能为空"),
   ai_model: z.string().min(1, "模型名称不能为空"),
@@ -70,6 +77,8 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchedModels, setFetchedModels] = useState<string[]>([]);
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -95,31 +104,37 @@ export default function SettingsPage() {
     },
   });
 
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Watch for provider changes to update defaults
   useEffect(() => {
+    if (!isInitialized) return; // Skip if not initialized to prevent overwriting saved config
+
     const subscription = form.watch((value, { name, type }) => {
       if (name === "ai_provider" && type === "change") {
         const provider = value.ai_provider as string;
         if (provider && PROVIDER_DEFAULTS[provider]) {
           const defaults = PROVIDER_DEFAULTS[provider];
-          // Only update if not already set or if switching to a known provider default
-          // But to be user friendly, let's just update the placeholder or suggestion. 
-          // Here we update value directly for better UX on switch
           form.setValue("ai_base_url", defaults.baseUrl);
           form.setValue("ai_model", defaults.model);
         }
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, form.setValue]);
+  }, [form.watch, form.setValue, isInitialized]);
 
   useEffect(() => {
     fetch("/api/settings")
       .then((res) => res.json())
       .then((data) => {
         if (Object.keys(data).length > 0) {
+          let provider = data.ai_provider || "openai";
+          if (LEGACY_PROVIDER_MAP[provider]) {
+            provider = LEGACY_PROVIDER_MAP[provider];
+          }
+
           form.reset({
-            ai_provider: data.ai_provider || "openai",
+            ai_provider: provider,
             ai_base_url: data.ai_base_url || PROVIDER_DEFAULTS.openai.baseUrl,
             ai_api_key: data.ai_api_key || "",
             ai_model: data.ai_model || PROVIDER_DEFAULTS.openai.model,
@@ -140,12 +155,64 @@ export default function SettingsPage() {
           });
         }
         setLoading(false);
+        setIsInitialized(true);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
+        setIsInitialized(true);
       });
   }, [form]);
+
+  // Load models from cache on provider/url change
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const subscription = form.watch((value, { name }) => {
+      if (name === "ai_provider" || name === "ai_base_url") {
+        const provider = value.ai_provider as string;
+        const baseUrl = value.ai_base_url as string;
+        
+        if (provider && baseUrl) {
+          const cacheKey = `${provider}:${baseUrl}`;
+          const cachedData = localStorage.getItem(cacheKey);
+          if (cachedData) {
+            try {
+              const { models, timestamp } = JSON.parse(cachedData);
+              // Cache valid for 24 hours
+              if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+                setFetchedModels(models);
+              } else {
+                setFetchedModels([]);
+              }
+            } catch (e) {
+              setFetchedModels([]);
+            }
+          } else {
+            setFetchedModels([]);
+          }
+        }
+      }
+    });
+    
+    // Also run immediately for initial state
+    const provider = form.getValues("ai_provider");
+    const baseUrl = form.getValues("ai_base_url");
+    if (provider && baseUrl) {
+      const cacheKey = `${provider}:${baseUrl}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        try {
+          const { models, timestamp } = JSON.parse(cachedData);
+          if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+            setFetchedModels(models);
+          }
+        } catch (e) {}
+      }
+    }
+
+    return () => subscription.unsubscribe();
+  }, [form.watch, form.getValues, isInitialized]);
 
   const onSubmit = async (data: FormValues) => {
     setSaving(true);
@@ -170,6 +237,111 @@ export default function SettingsPage() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const fetchModels = async () => {
+    const baseUrl = form.getValues("ai_base_url");
+    const apiKey = form.getValues("ai_api_key");
+    const provider = form.getValues("ai_provider");
+
+    if (!baseUrl || !apiKey) {
+      toast({
+        title: "无法获取",
+        description: "请先填写 Base URL 和 API Key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check cache first
+    const cacheKey = `${provider}:${baseUrl}`;
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      try {
+        const { models, timestamp } = JSON.parse(cachedData);
+        // Cache valid for 24 hours
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+           setFetchedModels(models);
+           toast({
+             title: "获取成功 (缓存)",
+             description: `已加载 ${models.length} 个模型`,
+           });
+           return;
+        }
+      } catch (e) {
+        localStorage.removeItem(cacheKey);
+      }
+    }
+
+    setIsFetchingModels(true);
+    setFetchedModels([]);
+    
+    try {
+      const res = await fetch("/api/models/list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseUrl, apiKey, provider }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch models");
+      }
+
+      if (data.models && data.models.length > 0) {
+        // Filter and Sort Models
+        let filteredModels = data.models as string[];
+        
+        // Basic filtering to remove obviously irrelevant ones (embeddings, audio, etc if not chat)
+        // But most /models endpoints just return everything.
+        // We'll prioritize common chat models.
+        
+        // Remove duplicates
+        filteredModels = Array.from(new Set(filteredModels));
+        
+        // Simple heuristic sort: prioritize models with "gpt", "claude", "qwen", "doubao" etc.
+        filteredModels.sort((a, b) => {
+           const priorityKeywords = ["gpt-4", "claude-3", "qwen-max", "doubao-pro", "deepseek-chat"];
+           const getPriority = (name: string) => {
+             const index = priorityKeywords.findIndex(k => name.toLowerCase().includes(k));
+             return index === -1 ? 999 : index;
+           };
+           return getPriority(a) - getPriority(b) || a.localeCompare(b);
+        });
+
+        // Limit list size if too large (e.g. > 100) to prevent UI lag, keeping top matches
+        if (filteredModels.length > 100) {
+           filteredModels = filteredModels.slice(0, 100);
+        }
+
+        setFetchedModels(filteredModels);
+        
+        // Save to cache
+        localStorage.setItem(cacheKey, JSON.stringify({
+          models: filteredModels,
+          timestamp: Date.now()
+        }));
+
+        toast({
+          title: "获取成功",
+          description: `已获取 ${filteredModels.length} 个模型`,
+        });
+      } else {
+        toast({
+          title: "提示",
+          description: "未找到可用模型",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "获取失败",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingModels(false);
     }
   };
 
@@ -213,11 +385,11 @@ export default function SettingsPage() {
                           <SelectContent>
                             <SelectItem value="openai">OpenAI</SelectItem>
                             <SelectItem value="azure">Azure OpenAI</SelectItem>
-                            <SelectItem value="qwen">通义千问 (Qwen)</SelectItem>
-                            <SelectItem value="doubao">豆包 (Doubao)</SelectItem>
+                            <SelectItem value="aliyun">阿里云百炼 (Qwen)</SelectItem>
+                            <SelectItem value="volcengine">火山引擎 (Doubao)</SelectItem>
                             <SelectItem value="modelscope">ModelScope</SelectItem>
-                            <SelectItem value="zhipu">智谱 AI (ChatGLM)</SelectItem>
-                            <SelectItem value="yuanbao">腾讯元宝 (Hunyuan)</SelectItem>
+                            <SelectItem value="bigmodel">智谱 BigModel</SelectItem>
+                            <SelectItem value="tencent">腾讯云 (Hunyuan)</SelectItem>
                             <SelectItem value="deepseek">DeepSeek</SelectItem>
                             <SelectItem value="custom">Custom (Local/Other)</SelectItem>
                           </SelectContent>
@@ -258,7 +430,37 @@ export default function SettingsPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>模型名称</FormLabel>
-                        <FormControl><Input {...field} placeholder="例如: gpt-4-turbo" /></FormControl>
+                        <div className="flex gap-2">
+                          <FormControl className="flex-1">
+                             <Input {...field} placeholder="例如: gpt-4-turbo" />
+                          </FormControl>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={fetchModels}
+                            disabled={isFetchingModels}
+                            title="获取模型列表"
+                          >
+                            {isFetchingModels ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {fetchedModels.length > 0 && (
+                          <div className="mt-2">
+                             <Select onValueChange={field.onChange} value={fetchedModels.includes(field.value) ? field.value : undefined}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="从列表中选择模型..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {fetchedModels.map((model) => (
+                                  <SelectItem key={model} value={model}>{model}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

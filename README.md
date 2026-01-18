@@ -4,16 +4,19 @@
 
 Log your work. Let Logmind think.
 
+![LogMind Dashboard](docs/images/dashboard-preview.png)
+
 LogMind is an intelligent work logging and reporting system that helps you track daily tasks and automatically generates weekly, monthly, and yearly reports using AI.
 
 ## Features
 
-- **Dashboard**: Overview of work progress, recent activities, and report statistics.
-- **Daily Logs**: Record daily work items, progress, priority, and plans for tomorrow.
-- **AI Reports**: Automatically generate professional Weekly/Monthly/Yearly reports using customizable AI prompts.
-- **Search**: Fast local search for logs and reports.
-- **System Settings**: Configure AI Providers (OpenAI/Azure/Custom) and customize Prompt templates.
-- **Responsive Design**: Modern UI built with Tailwind CSS and Shadcn/ui.
+- **📊 Smart Dashboard**: Real-time overview of work progress, recent activities, and report statistics with visual charts.
+- **📝 Structured Daily Logs**: Record daily work items with priority, progress tracking, and plans for tomorrow.
+- **🤖 AI-Powered Reports**: Automatically generate professional Weekly/Monthly/Yearly reports using customizable AI prompts (OpenAI/Azure/Custom).
+- **🔍 Fast Search**: Instant local search for logs and reports.
+- **⚙️ Flexible Configuration**: Configure AI Providers and customize Prompt templates to fit your workflow.
+- **🎨 Modern UI**: Responsive design built with Tailwind CSS and Shadcn/ui, supporting Dark Mode.
+- **🔐 Secure & Private**: Data stored in your own database (PostgreSQL/SQLite).
 
 ## Getting Started
 

@@ -4,8 +4,8 @@ FROM node:18-alpine AS base
 # Use Aliyun mirror for apk
 ## RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-# 使用清华 TUNA 镜像源
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+# 使用华为源
+RUN sed -i 's/dl-cdn.alpinelinux.org/repo.huaweicloud.com/g' /etc/apk/repositories
 
 # Install dependencies only when needed
 FROM base AS deps

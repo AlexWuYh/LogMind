@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   logmind:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.cn  ## 使用国内源进行镜像构建
     container_name: logmind-app
     restart: always
     ports:

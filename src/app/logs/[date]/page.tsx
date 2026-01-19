@@ -58,7 +58,7 @@ export default function LogEditorPage() {
   const [saving, setSaving] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       date: date,
       items: [{ content: "", progress: 0, priority: "MEDIUM", project: "" }],

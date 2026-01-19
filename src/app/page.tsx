@@ -120,17 +120,29 @@ export default function DashboardPage() {
            </div>
         </BentoCard>
 
-        <BentoCard className="col-span-1 flex flex-col justify-center items-center text-center p-6 border-dashed border-2 bg-transparent hover:bg-accent/5 transition-colors cursor-pointer group">
-           <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-             <Sparkles className="h-6 w-6 text-muted-foreground" />
+        <BentoCard className="col-span-1 bg-gradient-to-br from-purple-50 to-pink-50/50 dark:from-purple-950/20 dark:to-pink-900/10">
+           <div className="flex flex-col justify-between h-full">
+             <div className="flex justify-between items-start">
+               <div className="p-2 bg-purple-100/50 dark:bg-purple-900/30 rounded-lg">
+                 <CalendarDays className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+               </div>
+               <span className="text-xs font-medium text-purple-600/80 dark:text-purple-400/80 bg-purple-100/30 px-2 py-0.5 rounded-full">This Month</span>
+             </div>
+             <div>
+               <div className="text-3xl font-bold text-foreground">{data.monthCount} <span className="text-sm font-normal text-muted-foreground">天</span></div>
+               <p className="text-xs text-muted-foreground mt-1">本月记录天数</p>
+             </div>
            </div>
-           <h3 className="font-semibold text-foreground">快速生成</h3>
-           <p className="text-xs text-muted-foreground mt-1 px-4">一键生成本周工作周报</p>
         </BentoCard>
 
         {/* Today's Focus - Large Card */}
         <BentoCard className="col-span-1 md:col-span-2 lg:col-span-2 row-span-2 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+           <div className={cn(
+             "absolute top-0 right-0 p-6 transition-all duration-500",
+             data.todayProgress === 100 ? "opacity-50 text-green-500" : 
+             data.todayProgress > 0 ? "opacity-40 text-blue-500" : 
+             "opacity-30 group-hover:opacity-40 text-muted-foreground"
+           )}>
              <CheckCircle2 className="h-32 w-32" />
            </div>
            <CardHeader>
@@ -161,7 +173,11 @@ export default function DashboardPage() {
                    <div className="space-y-2 mb-6">
                      <div className="flex justify-between text-xs font-medium uppercase tracking-wider text-muted-foreground">
                        <span>Progress</span>
-                       <span>{data.todayProgress}%</span>
+                       <span className={cn(
+                         data.todayProgress === 100 ? "text-green-600 dark:text-green-400" : 
+                         data.todayProgress > 0 ? "text-blue-600 dark:text-blue-400" : 
+                         "text-muted-foreground"
+                       )}>{data.todayProgress}%</span>
                      </div>
                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
                        <div className="h-full bg-primary rounded-full" style={{ width: `${data.todayProgress}%` }} />

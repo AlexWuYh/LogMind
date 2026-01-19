@@ -25,6 +25,7 @@ type DailyWorkItem = {
 type DailyLog = {
   id: string;
   date: string;
+  project?: string;
   summary: string;
   aiSummary?: string;
   progress: number;

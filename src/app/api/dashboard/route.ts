@@ -5,7 +5,7 @@ import { auth } from '@/auth';
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   
   const userId = session.user.id;
 
@@ -33,9 +33,17 @@ export async function GET() {
 
   // Check today's status
   const todayStr = now.toISOString().split('T')[0];
-  const todayLog = await prisma.dailyLog.findUnique({
-    where: { userId_date: { userId, date: todayStr } }
+  const todayLog: any = await prisma.dailyLog.findUnique({
+    where: { userId_date: { userId, date: todayStr } },
+    include: { items: true }
   });
+
+  let todayProgress = todayLog?.progress || 0;
+  // If progress is 0 but we have items, calculate it from items (legacy data fix)
+  if (todayLog && todayProgress === 0 && todayLog.items && todayLog.items.length > 0) {
+    const totalProgress = todayLog.items.reduce((sum: number, item: any) => sum + (Number(item.progress) || 0), 0);
+    todayProgress = Math.round(totalProgress / todayLog.items.length);
+  }
 
   return NextResponse.json({
     weekCount,
@@ -50,6 +58,6 @@ export async function GET() {
     },
     recentLogs,
     todayLogged: !!todayLog,
-    todayProgress: todayLog?.progress || 0,
+    todayProgress,
   });
 }

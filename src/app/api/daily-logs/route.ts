@@ -40,6 +40,13 @@ export async function POST(request: Request) {
   
   if (!date) return NextResponse.json({ error: 'Date is required' }, { status: 400 });
 
+  // Calculate progress from items if not provided explicitly
+  let calculatedProgress = Number(progress || 0);
+  if (items && Array.isArray(items) && items.length > 0) {
+    const totalProgress = items.reduce((sum: number, item: any) => sum + (Number(item.progress) || 0), 0);
+    calculatedProgress = Math.round(totalProgress / items.length);
+  }
+
   try {
     const result = await prisma.$transaction(async (tx) => {
       // 1. Upsert DailyLog
@@ -53,7 +60,7 @@ export async function POST(request: Request) {
         update: {
           tomorrowPlan,
           summary,
-          progress: Number(progress || 0),
+          progress: calculatedProgress,
           priority,
           project,
         },
@@ -62,7 +69,7 @@ export async function POST(request: Request) {
           date,
           tomorrowPlan,
           summary,
-          progress: Number(progress || 0),
+          progress: calculatedProgress,
           priority,
           project,
         },

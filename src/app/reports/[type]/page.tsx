@@ -438,7 +438,7 @@ export default function ReportPage() {
                 report={report} 
                 typeLabel={typeLabel()} 
                 onDelete={() => setDeleteId(report.id)} 
-                onCopy={(content) => handleCopy(content, report.id)}
+                onCopy={(content: string) => handleCopy(content, report.id)}
                 isCopied={copiedId === report.id}
               />
             ))}

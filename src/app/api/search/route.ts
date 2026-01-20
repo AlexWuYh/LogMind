@@ -17,9 +17,9 @@ export async function GET(request: Request) {
     where: {
       userId: session.user.id,
       OR: [
-        { summary: { contains: q, mode: 'insensitive' } },
-        { project: { contains: q, mode: 'insensitive' } },
-        { items: { some: { content: { contains: q, mode: 'insensitive' } } } },
+        { summary: { contains: q } },
+        { project: { contains: q } },
+        { items: { some: { content: { contains: q } } } },
       ],
     },
     include: { items: true },

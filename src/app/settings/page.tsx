@@ -81,7 +81,7 @@ export default function SettingsPage() {
   const [isFetchingModels, setIsFetchingModels] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       ai_provider: "openai",
       ai_base_url: PROVIDER_DEFAULTS.openai.baseUrl,

@@ -10,30 +10,34 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://logmind:logmind_password@postgres:5432/logmind_db
+      # - DATABASE_URL=postgresql://logmind:logmind_password@postgres:5432/logmind_db
+      - DATABASE_URL=file:./dev.db
       - NEXTAUTH_URL=http://localhost:3000
+      - AUTH_TRUST_HOST=true
       - NEXTAUTH_SECRET=your-super-secret-nextauth-key-change-this
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: logmind-db
-    restart: always
-    environment:
-      - POSTGRES_USER=logmind
-      - POSTGRES_PASSWORD=logmind_password
-      - POSTGRES_DB=logmind_db
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U logmind -d logmind_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - ./prisma/dev.db:/app/prisma/dev.db
 
-volumes:
-  postgres_data:
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: logmind-db
+  #   restart: always
+  #   environment:
+  #     - POSTGRES_USER=logmind
+  #     - POSTGRES_PASSWORD=logmind_password
+  #     - POSTGRES_DB=logmind_db
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U logmind -d logmind_db"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+
+# volumes:
+#   postgres_data:

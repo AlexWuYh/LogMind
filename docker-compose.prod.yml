@@ -9,11 +9,8 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://logmind:logmind_password@postgres:5432/logmind_db
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=your-super-secret-nextauth-key-change-this
-      - AUTH_TRUST_HOST=true
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
@@ -22,10 +19,8 @@ services:
     image: postgres:15-alpine
     container_name: logmind-db-prod
     restart: always
-    environment:
-      - POSTGRES_USER=logmind
-      - POSTGRES_PASSWORD=logmind_password
-      - POSTGRES_DB=logmind_db
+    env_file:
+      - .env
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     ports:

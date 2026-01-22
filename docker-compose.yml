@@ -14,8 +14,9 @@ services:
     # depends_on:
     #   postgres:
     #     condition: service_healthy
+    # For SQLite: use named volume to avoid permission issues
     volumes:
-      - ./prisma/dev.db:/app/prisma/dev.db
+      - sqlite_data:/app/prisma
 
   # postgres:
   #   image: postgres:15-alpine
@@ -37,3 +38,6 @@ services:
 
 # volumes:
 #   postgres_data:
+
+volumes:
+  sqlite_data:
